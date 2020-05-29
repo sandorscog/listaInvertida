@@ -8,9 +8,22 @@ class Invertida{
   RandomAccessFile IDs;
 
   public static void main(String[] args){
-    Invertida lista = new Invertida();
     try{
+      Invertida lista = new Invertida();
       lista.create(1,"José Guilherme");
+      lista.create(2,"José Pedro");
+      lista.create(3,"José Oliveira");
+      lista.create(4,"José Oliveira");
+      lista.create(5,"José Oliveira");
+      lista.create(6,"José Oliveira");
+      lista.create(7,"José Oliveira");
+      lista.create(8,"José Oliveira");
+      lista.create(9,"José Oliveira");
+      lista.create(10,"José Oliveira");
+      lista.create(11,"José Oliveira");
+      lista.create(12,"José Oliveira");
+      lista.create(13,"José Oliveira");
+      lista.create(14,"José Oliveira");
     }catch (Exception e) {
       e.printStackTrace();
     }
@@ -18,57 +31,93 @@ class Invertida{
   }
 
   public Invertida(){
-
+    try{
+      termos = new RandomAccessFile("termoEndereco.db", "rw");
+      IDs = new RandomAccessFile("IDs.db", "rw");
+    }catch (Exception e){
+      e.printStackTrace();
+    }
   }
 
   public boolean create(int id, String nome)throws Exception{
 
-
+    System.out.println("oi");
     createTermo(id,nome);
 
     return true;
   }
 
   public void createTermo(int id, String nome)throws Exception{
-    termos = new RandomAccessFile("termoEndereco.db", "rw");
+
     ArrayList<String> listaTermos = limpa(nome);
-    long addr;
+    long addr = 0;
 
     for(int i = 0; i < listaTermos.size(); ++i){
       termos.seek(0);
-      boolean flag = false;
-      while(termos.getFilePointer() < termos.length() && !flag){
-        if(termos.readUTF().equals(listaTermos.get(i))) flag = true;
+      boolean existe = false;
+      while(termos.getFilePointer() < termos.length() && !existe){
+        if(termos.readUTF().equals(listaTermos.get(i))) existe = true;
         addr = termos.readLong();
       }
 
-      if(flag == false){
-        //create
+      if(existe){
+        addr = createID(id, addr);
       }else if(termos.getFilePointer() == termos.length()){
         termos.writeUTF(listaTermos.get(i));
-        //addr = create do bloco - retorna o endereco do long debaixo
-        termos.writeLong();
+        addr = createID(id, -1);
+        termos.writeLong(addr);
       }
     }
 
 
   }
 
-  public long createID(int id, long addr){
-    IDs = new RandomAccessFile("IDs.db", "rw");
+  public long createID(int id, long addr)throws Exception{
 
     if(addr == -1){
       IDs.seek(IDs.length());
-      IDs.writeInt(1);
-      IDs.writeInt(id);
-      for(int i = 9; i < 9; ++i){
-        IDs.writeInt(-1);
+      addr = IDs.getFilePointer();
+      IDs.writeInt(1);            //inicializacao do bloco, vamos ate o final
+      IDs.writeInt(id);           //entao escrevemos 1 para o n de elementos
+      for(int i = 0; i < 9; ++i){ //no novo bloco e colocamos 9 posicoes vazias
+        IDs.writeInt(-1);         //no final colocamos um ponteiro vazio
       }
+      IDs.writeLong(-1);
 
     }else{
-      
+      IDs.seek(addr);
+      int n = IDs.readInt();
+      if(n < 10){
+        IDs.seek(IDs.getFilePointer()-4);
+        IDs.writeInt(n+1);
+        int i = 0;
+        n = IDs.readInt();
+        while(i < 9 && n != -1){
+          n = IDs.readInt();
+          i++;
+        }
+        IDs.seek(IDs.getFilePointer()-4);
+        IDs.writeInt(id);
+
+      } else {
+        for(int i = 0; i < 10; i++){
+          n = IDs.readInt();
+        }
+        long posPonteiro = IDs.getFilePointer();
+        long ponteiro = IDs.readLong();
+
+        if(ponteiro == -1){
+          addr = createID(id, ponteiro);
+          IDs.seek(posPonteiro);
+          IDs.writeLong(addr);
+        }else{
+          addr = createID(id, ponteiro);
+        }
+
+      }
     }
 
+    return addr;
   }
 
   public static ArrayList<String> limpa(String str){
