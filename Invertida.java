@@ -1,4 +1,5 @@
 import java.io.*;
+import java.util.Scanner;
 import java.text.Normalizer;
 import java.util.ArrayList;
 
@@ -10,19 +11,48 @@ class Invertida{
   public static void main(String[] args){
     try{
       Invertida lista = new Invertida();
-      lista.create(1,"Marcos Antônio de Oliveira");
-      lista.create(2,"José Marcos Resende");
-      lista.create(3,"Paula Oliveira");
+      Scanner in = new Scanner(System.in);
+      ArrayList<Integer> i = new ArrayList<>();
+
+      /*
+      lista.create(1,"Marcos Antônio de Oliveira");      algumas insercoes prontas e uma pesquisa
+      lista.create(2,"José Marcos Resende");             basta comentar a parte de menu abaixo e o
+      lista.create(3,"Paula Oliveira");                  oposto aqui
       lista.create(4,"Carlos José Antônio Souza");
       lista.create(5,"José Carlos de Paula");
-      //lista.create(6,"José Oliveira santana");
-      lista.create(6,"Sandor Borges Scoggin");
 
-      ArrayList<Integer> i = lista.read("José de Paula");
-      
+      i = lista.read("José de Paula");
       for(int j = 0; j < i.size(); j++){
         System.out.print(i.get(j) + " - ");
       }
+      System.out.println();
+      */
+      System.out.print("Digite f para finalizar - c para criar um novo registro - r para fazer uma pesquisa: ");
+      String entrada = in.nextLine();
+      while(!entrada.equals("f")){
+        if(entrada.equals("c")){
+          int n = in.nextInt();           //Input de diferente tipo nao e tratado e gera um java.util.InputMismatchException
+          in.nextLine(); //"fflush()"
+          entrada = in.nextLine();                 //Menu com tres opcoes, saida, criar registro ou pesquisar
+                                                   //O novo registro deve ser feito com um int e apos sua confirmacao
+          lista.create(n, entrada);                //a string do termo, caso contrario ocorre uma execao n tratada
+
+        } else if(entrada.equals("r")){
+          entrada = in.nextLine();
+          i = lista.read(entrada);
+          for(int j = 0; j < i.size(); j++){
+            System.out.print(i.get(j) + " - ");
+          }
+          System.out.println();
+
+        } else
+          System.out.println("operacao invalida");
+
+
+        System.out.print("Digite f para finalizar - c para criar um novo registro - r para fazer uma pesquisa: ");
+        entrada = in.nextLine();
+      }
+
     }catch (Exception e) {
       e.printStackTrace();
     }
@@ -31,7 +61,7 @@ class Invertida{
 
   public Invertida(){
     try{
-      termos = new RandomAccessFile("termoEndereco.db", "rw");
+      termos = new RandomAccessFile("termoEndereco.db", "rw");   //construtor inicializa os arquivos
       IDs = new RandomAccessFile("IDs.db", "rw");
     }catch (Exception e){
       e.printStackTrace();
@@ -58,12 +88,12 @@ class Invertida{
           if(termos.readUTF().equals(listaTermos.get(i))) existe = true;  //caso exista o loop quebra
           addr = termos.readLong();
         }
-        ArrayList<Integer> novo = readID(addr);
+        ArrayList<Integer> novo = readID(addr);  //Chama a leitura dos IDs no bloco do termo em questao
 
         if(i > 0)
-          intersecao = intersecciona(novo, intersecao);
-        else
-          intersecao = intersecciona(novo, novo);
+          intersecao = intersecciona(novo, intersecao);  //acha as chaves que estao no novo conjunto de IDs e acha
+        else                                             //a intersecao entre esse e os anteriores.
+          intersecao = intersecciona(novo, novo);  //inicializa o vetor no primeiro conjunto de IDs
       }
     }catch (Exception e){
       e.printStackTrace();
@@ -76,21 +106,21 @@ class Invertida{
     ArrayList<Integer> ids = new ArrayList<>();
 
     try{
-      IDs.seek(addr);
+      IDs.seek(addr);                //vai ao bloco do termo
       int n = IDs.readInt();
       if(n < 10){
-        for(int i = 0; i < n; i++)
+        for(int i = 0; i < n; i++)   //le todas as IDs caso apenas existao menos de 10
           ids.add(IDs.readInt());
 
       } else {
-        for(int i = 0; i < n; i++)
+        for(int i = 0; i < n; i++)  //le todas as IDs do bloco e le o endereco do proximo bloco
           ids.add(IDs.readInt());
 
         addr = IDs.readLong();
         if(addr > -1){
-          ids.addAll(readID(addr));
-          System.out.println("rec");
-        }
+          ids.addAll(readID(addr));   //caso o proximo bloco exista chamamos recursivamente essa
+          System.out.println("rec");  //funcao e concatenamos o array dos blocos seguintes no final
+        }                             //do array desse bloco e retornamos esse array
       }
     }catch (Exception e){
       e.printStackTrace();
@@ -101,8 +131,8 @@ class Invertida{
 
   public ArrayList<Integer> intersecciona(ArrayList<Integer> novo, ArrayList<Integer> intersecao){
 
-    ArrayList<Integer> atualizada = new ArrayList<>();
-    for(int i = 0; i < novo.size(); i++){
+    ArrayList<Integer> atualizada = new ArrayList<>();   //gera e retorna um array com as IDs em comum dos dois arrays
+    for(int i = 0; i < novo.size(); i++){                //que foram passados como argumentos
       if( intersecao.contains(novo.get(i)) ) atualizada.add(novo.get(i));
     }
     return atualizada;
